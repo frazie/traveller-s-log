@@ -19,13 +19,29 @@ connectDB()
 const app = express()
 
 
+//BODY PARSER
+app.use(express.urlencoded({ extended: false }))
+app.use(express.json())
+
 // LOGGING
 if (process.env.NODE_ENV === 'development'){
     app.use(morgan('dev'))
 }
 
+//HANDLEBARS HELPERS
+const { formatDate, truncate, stripTags, editIcon } = require('./helpers/hbs')
+
 //HANDLEBARS
-app.engine('.hbs', exphbs.engine({ defaultLayout: 'main', extname: '.hbs' }))
+app.engine('.hbs', exphbs.engine({ 
+    helpers: {
+        formatDate,
+        stripTags,
+        truncate,
+        editIcon,
+    },
+    defaultLayout: 'main', 
+    extname: '.hbs' 
+}))
 app.set('view engine', '.hbs')
 
 //sessions
@@ -44,12 +60,20 @@ app.use(
 app.use(passport.initialize())
 app.use(passport.session())
 
+//set global variable
+app.use(function (req, res, next){
+    res.locals.user = req.user || null
+    next()
+})
+
 //STATIC FOLDER
 app.use(express.static(path.join(__dirname, 'public')))
 
 //ROUTES
 app.use('/', require('./routes/index'))
 app.use('/auth', require('./routes/auth'))
+app.use('/stories', require('./routes/stories'))
+
 
 const PORT = process.env.PORT || 5000
 
