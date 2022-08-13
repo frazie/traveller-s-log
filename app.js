@@ -3,6 +3,7 @@ const express = require('express')
 const dotenv = require('dotenv')
 const morgan = require('morgan')
 const exphbs = require('express-handlebars')
+const methodOverride = require('method-override')
 const passport = require('passport')
 const session = require('express-session')
 const MongoStore = require('connect-mongo')
@@ -18,10 +19,18 @@ connectDB()
 
 const app = express()
 
-
 //BODY PARSER
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
+
+//METHOD OVERRIDE
+app.use(methodOverride(function (req, res) {
+    if (req.body && typeof req.body === 'object' && '_method' in req.body){
+        let method = req.body._method
+        delete req.body._method
+        return method
+    }
+}))
 
 // LOGGING
 if (process.env.NODE_ENV === 'development'){
@@ -29,7 +38,7 @@ if (process.env.NODE_ENV === 'development'){
 }
 
 //HANDLEBARS HELPERS
-const { formatDate, truncate, stripTags, editIcon } = require('./helpers/hbs')
+const { formatDate, truncate, stripTags, editIcon, select } = require('./helpers/hbs')
 
 //HANDLEBARS
 app.engine('.hbs', exphbs.engine({ 
@@ -38,6 +47,7 @@ app.engine('.hbs', exphbs.engine({
         stripTags,
         truncate,
         editIcon,
+        select,
     },
     defaultLayout: 'main', 
     extname: '.hbs' 
